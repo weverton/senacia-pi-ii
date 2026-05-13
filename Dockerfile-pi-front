@@ -1,0 +1,9 @@
+# Dockerfile
+FROM mcr.microsoft.com/devcontainers/python:3-3.11-bookworm
+
+WORKDIR /app
+
+RUN apt update 
+RUN pip install streamlit requests 
+
+ENTRYPOINT [ "streamlit", "run", "./source/NLP/pi_frontend.py", "--server.port", "8501" ]

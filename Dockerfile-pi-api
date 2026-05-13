@@ -1,0 +1,12 @@
+# Dockerfile
+FROM mcr.microsoft.com/devcontainers/python:3-3.11-bookworm
+
+WORKDIR /app
+
+RUN apt update && apt install -y ffmpeg libsndfile1
+RUN pip install fastapi uvicorn python-multipart langchain langchain-openai langchain-community \
+           sentence-transformers faster-whisper chromadb torch pydantic python-dotenv \
+           torchdata GPUtil IPython langchain-chroma langchain-classic langchain-core \
+           langchain-huggingface langchain-text-splitters pypdf rank-bm25 
+
+ENTRYPOINT [ "python", "./source/NLP-PI/pi_api_server.py" ]

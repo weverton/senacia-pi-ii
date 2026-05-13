@@ -1,0 +1,69 @@
+version: '3.9'
+
+services:
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile-pi-api
+    container_name: pi-api
+
+    user: root
+    
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    volumes:
+      # UPDATE THIS PATH to your actual Linux directory
+      # Example: /home/john/hf_cache or /mnt/nvme/hf_cache
+      - type: bind
+        source: /home/senacgoon.local/202473555/TecIA/hf_cache
+        target: /root/.cache/huggingface
+      
+      # Mount current project directory
+      - type: bind
+        source: .
+        target: /app/source
+
+    env_file:
+      - .env
+
+    ports:
+      - "8000:8000"
+  
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile-pi-front-vue
+    container_name: pi-frontend
+    
+    # DevContainer specified remoteUser: root
+    user: root
+    
+    ports:
+      - "8090:80"
+
+  vllm:
+    container_name: vllm
+    image: vllm/vllm-openai:latest
+    ports:
+      - "8080:8000"
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - type: bind
+        source: /home/senacgoon.local/202473555/TecIA/hf_cache
+        target: /root/.cache/huggingface
+    env_file:
+      - .env
+    command: --model PORTULAN/gervasio-8b-portuguese-ptpt-decoder --max-model-len=2048 --gpu-memory-utilization=0.8 --cpu-offload-gb=4

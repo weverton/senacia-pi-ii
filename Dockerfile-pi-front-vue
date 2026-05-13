@@ -1,0 +1,37 @@
+# ──────────────────────────────────────────────────────────────
+# STAGE 1: Build
+# ──────────────────────────────────────────────────────────────
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+# Install dependencies (cached layer)
+COPY ./NLP-PI/pi-frontend/package*.json ./
+RUN npm ci --ignore-scripts
+
+# Copy source & build
+COPY ./NLP-PI/pi-frontend/ .
+ARG VITE_API_URL=http://localhost:8090/api
+ENV VITE_API_URL=${VITE_API_URL}
+RUN npm run build
+
+# ──────────────────────────────────────────────────────────────
+# STAGE 2: Serve
+# ──────────────────────────────────────────────────────────────
+FROM nginx:alpine AS production
+
+# Clean default Nginx files FIRST
+RUN rm /etc/nginx/conf.d/default.conf \
+    && rm -rf /usr/share/nginx/html/*
+
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Custom Nginx config for SPA + optional API proxy
+COPY ./NLP-PI/pi-frontend/nginx.conf /etc/nginx/conf.d/default.conf
+
+
+
+EXPOSE 80
+
+# Run Nginx in foreground (Docker best practice)
+CMD ["nginx", "-g", "daemon off;"]

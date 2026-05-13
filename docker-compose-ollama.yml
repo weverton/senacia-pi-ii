@@ -1,0 +1,85 @@
+version: '3.9'
+
+services:
+  hf_marimo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag_hf_marimo
+    
+    # DevContainer specified remoteUser: root
+    user: root
+    
+    # GPU Support for Native Linux
+    # Requires NVIDIA Container Toolkit installed on host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    volumes:
+      # UPDATE THIS PATH to your actual Linux directory
+      # Example: /home/john/hf_cache or /mnt/nvme/hf_cache
+      - type: bind
+        source: /home/senacgoon.local/202473555/TecIA/hf_cache
+        target: /root/.cache/huggingface
+      
+      # Mount current project directory
+      - type: bind
+        source: .
+        target: /workspaces/hf_marimo/source
+
+    env_file:
+      - .env
+
+    ports:
+      - "2718:2718"
+  
+  ollama:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile-ollama
+    image: ollama/ollama:latest
+    container_name: rag_ollama
+    
+    # DevContainer specified remoteUser: root
+    user: root
+    
+    # GPU Support for Native Linux
+    # Requires NVIDIA Container Toolkit installed on host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    volumes:
+      # UPDATE THIS PATH to your actual Linux directory
+      # Example: /home/john/hf_cache or /mnt/nvme/hf_cache
+      - type: bind
+        source: /home/senacgoon.local/202473555/TecIA/hf_cache
+        target: /root/.cache/huggingface
+      
+      # Mount current project directory
+      - type: bind
+        source: .
+        target: /workspaces/hf_marimo/source
+      
+      - type: bind
+        source: /home/senacgoon.local/202473555/TecIA/rag-chromadb
+        target: /app/.chromadb
+      
+      - type: bind
+        source: /home/senacgoon.local/202473555/TecIA/rag-ollama
+        target: /root/.ollama     
+
+    env_file:
+      - .env
+
+    ports:
+      - "11434:11434"
